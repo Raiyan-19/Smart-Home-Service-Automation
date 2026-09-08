@@ -164,7 +164,7 @@ export default function ProviderDashboard() {
               TECHNICIAN <span className="text-[#F5A623] italic font-serif lowercase text-3xl sm:text-5xl">workspace</span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1">
-              Account: <strong className="text-white font-bold">{user?.name || 'Mohammad Kabir (Master Tech)'}</strong> • Primary Zone: <span className="text-[#F5A623] font-bold">Dhanmondi, Dhaka</span>
+              Account: <strong className="text-white font-bold">{user?.name || 'Certified Specialist'}</strong> • Primary Zone: <span className="text-[#F5A623] font-bold">{user?.location || 'Dhanmondi'}, Dhaka</span>
             </p>
           </div>
 

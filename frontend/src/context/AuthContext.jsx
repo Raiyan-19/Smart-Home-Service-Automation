@@ -29,7 +29,6 @@ export const AuthProvider = ({ children }) => {
             console.warn('Session expired, logging out:', err);
             logout();
           } else {
-            // Keep local user session
             console.log('Restored user session from local storage.');
           }
         }
@@ -107,7 +106,7 @@ export const AuthProvider = ({ children }) => {
     };
   };
 
-  // Register: Creates a new persistent account
+  // Register: Creates a new persistent account (Seamless for both Customer and Technician)
   const register = async (userData) => {
     const cleanEmail = (userData.email || '').trim().toLowerCase();
     const cleanPassword = (userData.password || '').trim();
@@ -117,12 +116,12 @@ export const AuthProvider = ({ children }) => {
       throw new Error('Name, email, and password are required for registration.');
     }
 
-    const registeredUsers = getRegisteredUsers();
-    const alreadyExists = registeredUsers.some((u) => u.email.toLowerCase() === cleanEmail);
-
-    if (alreadyExists) {
-      throw new Error('An account with this email is already registered. Please log in.');
+    if (cleanPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters long.');
     }
+
+    const registeredUsers = getRegisteredUsers();
+    const existingIndex = registeredUsers.findIndex((u) => u.email.toLowerCase() === cleanEmail);
 
     // Default avatar based on role
     const defaultAvatar =
@@ -130,46 +129,68 @@ export const AuthProvider = ({ children }) => {
         ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'
         : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
 
-    const newUser = {
-      _id: 'USR-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-      name: cleanName,
-      email: cleanEmail,
-      password: cleanPassword, // Stored locally to verify subsequent logins
-      role: userData.role || 'customer',
-      phone: userData.phone || '+880 1700-000000',
-      location: userData.location || 'Dhanmondi',
-      serviceExpertise: userData.serviceExpertise || ['AC & Appliance Repair'],
-      rating: 5.0,
-      totalJobs: 0,
-      bio: userData.bio || `${userData.role === 'provider' ? 'Certified Master Technician' : 'Home Resident'} based in ${userData.location || 'Dhaka'}.`,
-      profileImage: userData.profileImage || defaultAvatar,
-      registeredAt: new Date().toISOString(),
-    };
+    let targetUser;
 
-    // Save to registered accounts list
-    registeredUsers.push(newUser);
-    saveRegisteredUsers(registeredUsers);
+    if (existingIndex !== -1) {
+      // If email is already in local list:
+      const existing = registeredUsers[existingIndex];
+      // If password matches or user is updating/registering technician role
+      if (existing.password === cleanPassword) {
+        existing.name = cleanName || existing.name;
+        existing.role = userData.role || 'provider';
+        existing.phone = userData.phone || existing.phone;
+        existing.location = userData.location || existing.location;
+        existing.serviceExpertise = userData.serviceExpertise || existing.serviceExpertise || ['AC & Appliance Repair', 'Plumbing & Water Lines'];
+        targetUser = existing;
+        registeredUsers[existingIndex] = existing;
+        saveRegisteredUsers(registeredUsers);
+      } else {
+        throw new Error('An account with this email already exists with a different password. Please sign in or enter your original password.');
+      }
+    } else {
+      // Brand new user registration
+      targetUser = {
+        _id: 'USR-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
+        name: cleanName,
+        email: cleanEmail,
+        password: cleanPassword, // Stored locally to verify subsequent logins
+        role: userData.role || 'customer',
+        phone: userData.phone || '+880 1700-000000',
+        location: userData.location || 'Dhanmondi',
+        serviceExpertise: userData.serviceExpertise && userData.serviceExpertise.length > 0
+          ? userData.serviceExpertise
+          : ['AC & Appliance Repair', 'Plumbing & Water Lines'],
+        rating: 5.0,
+        totalJobs: 0,
+        bio: `${userData.role === 'provider' ? 'Certified Master Technician' : 'Home Resident'} based in ${userData.location || 'Dhaka'}.`,
+        profileImage: userData.profileImage || defaultAvatar,
+        registeredAt: new Date().toISOString(),
+      };
 
-    // Also try sending to backend if running
+      registeredUsers.push(targetUser);
+      saveRegisteredUsers(registeredUsers);
+    }
+
+    // Attempt backend registration if running (swallowing 405/network errors gracefully)
     try {
       const res = await api.post('/auth/register', userData);
       if (res.data?.success && res.data.user) {
-        newUser._id = res.data.user._id || newUser._id;
+        targetUser._id = res.data.user._id || targetUser._id;
       }
     } catch (e) {
-      // Backend unavailable; local persistence is active
+      // Backend unavailable / GitHub Pages static host: client-side persistence is 100% active
     }
 
-    // Automatically log the newly registered user in
-    const token = 'token_' + newUser._id + '_' + Date.now();
+    // Set active session
+    const token = 'token_' + targetUser._id + '_' + Date.now();
     localStorage.setItem('homeease_token', token);
-    localStorage.setItem('homeease_user', JSON.stringify(newUser));
-    setUser(newUser);
+    localStorage.setItem('homeease_user', JSON.stringify(targetUser));
+    setUser(targetUser);
 
     return {
       success: true,
       token,
-      user: newUser,
+      user: targetUser,
     };
   };
 
@@ -197,7 +218,6 @@ export const AuthProvider = ({ children }) => {
       registeredUsers[idx] = {
         ...registeredUsers[idx],
         ...updatedFields,
-        // keep password unchanged unless specified
         password: updatedFields.password || registeredUsers[idx].password,
       };
       saveRegisteredUsers(registeredUsers);
@@ -207,7 +227,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await api.patch('/auth/profile', updatedFields);
     } catch (e) {
-      // Offline fallback is fine
+      // Offline fallback
     }
 
     return updatedUser;

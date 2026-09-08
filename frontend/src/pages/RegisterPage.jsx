@@ -54,10 +54,11 @@ export default function RegisterPage() {
         role,
         phone,
         location,
-        serviceExpertise: selectedExpertise,
+        serviceExpertise: selectedExpertise && selectedExpertise.length > 0 ? selectedExpertise : ['AC & Appliance Repair'],
       });
 
-      if (data.user.role === 'provider') {
+      const assignedRole = data?.user?.role || role;
+      if (assignedRole === 'provider') {
         navigate('/provider-dashboard');
       } else {
         navigate('/customer-dashboard');
@@ -88,9 +89,22 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3.5 rounded-xl bg-red-950/70 border border-red-800 text-red-300 text-xs font-medium flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-red-400">error</span>
-              <span>{error}</span>
+            <div className="mb-4 p-4 rounded-xl bg-red-950/80 border border-red-700 text-red-200 text-xs font-medium space-y-2 animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-red-400">error</span>
+                <span>{error}</span>
+              </div>
+              {error.toLowerCase().includes('already') && (
+                <div className="pt-1">
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#F5A623] text-slate-950 font-black text-[11px] hover:brightness-110"
+                  >
+                    <span>Click here to Sign In</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
