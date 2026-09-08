@@ -1,13 +1,15 @@
 # HomeEase – Smart Home Service Automation & AI Dispatch Platform
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Source_Code-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Raiyan-19/Smart-Home-Service-Automation)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-22c55e?style=for-the-badge&logo=vercel&logoColor=white)](https://raiyan-19.github.io/Smart-Home-Service-Automation/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-GitHub_Pages-22c55e?style=for-the-badge&logo=githubpages&logoColor=white)](https://raiyan-19.github.io/Smart-Home-Service-Automation/)
+[![Deployment](https://img.shields.io/badge/Status-Live_Online-brightgreen?style=for-the-badge&logo=statuspage&logoColor=white)](https://raiyan-19.github.io/Smart-Home-Service-Automation/)
 
 > **Autonomous Smart Living Telemetry & Micro-Dispatch Architecture**  
 > Built for Dhaka Residences (Dhanmondi, Gulshan, Banani, Mirpur, Uttara, Mohammadpur)  
 > Full MERN Stack Implementation with WebGL Cybernetic Ambient Shader & Weighted Smart Matching
 
-🌐 **Live Demo:** [https://raiyan-19.github.io/Smart-Home-Service-Automation/](https://raiyan-19.github.io/Smart-Home-Service-Automation/)
+> 🚀 **Live Interactive Demo:** [https://raiyan-19.github.io/Smart-Home-Service-Automation/](https://raiyan-19.github.io/Smart-Home-Service-Automation/)  
+> *(Fully deployed on GitHub Pages — explore the real-time smart dispatch system, simulated GPS telemetry, and client/provider portals directly in your browser!)*
 
 ---
 
