@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 
 export default function Navbar({ onOpenSosModal }) {
-  const { user, logout, quickDemoLogin, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const { notifications, unreadCount } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
@@ -12,27 +12,11 @@ export default function Navbar({ onOpenSosModal }) {
   const [selectedZone, setSelectedZone] = useState('Dhanmondi');
   const [showZoneDropdown, setShowZoneDropdown] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showDemoMenu, setShowDemoMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const zones = ['Dhanmondi', 'Gulshan', 'Banani', 'Mirpur', 'Uttara', 'Mohammadpur'];
 
   const isActive = (path) => location.pathname === path;
-
-  const handleDemoSelect = async (role) => {
-    setShowDemoMenu(false);
-    setMobileMenuOpen(false);
-    try {
-      const data = await quickDemoLogin(role);
-      if (role === 'provider') {
-        navigate('/provider-dashboard');
-      } else {
-        navigate('/customer-dashboard');
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   return (
     <header className="bg-[#0A0D12] text-white sticky top-0 z-50 border-b border-slate-800 shadow-xl transition-all">
@@ -150,7 +134,7 @@ export default function Navbar({ onOpenSosModal }) {
           )}
         </nav>
 
-        {/* Right Actions: Auth, SOS, Demo, Profile */}
+        {/* Right Actions: Auth, SOS, Profile */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Emergency SOS Button */}
           <button
@@ -208,7 +192,7 @@ export default function Navbar({ onOpenSosModal }) {
                     className="w-full text-left px-4 py-2 text-xs text-slate-200 hover:bg-slate-800/80 flex items-center gap-2 font-medium"
                   >
                     <span className="material-symbols-outlined text-[18px] text-blue-400">person</span>
-                    My Profile
+                    Edit Profile
                   </Link>
 
                   <div className="border-t border-slate-800 mt-1 pt-1">
@@ -229,59 +213,22 @@ export default function Navbar({ onOpenSosModal }) {
             </div>
           ) : (
             /* When User is NOT Authenticated: Show Log In & Register */
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Log In Link */}
+            <div className="flex items-center gap-2">
               <Link
                 to="/login"
-                className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-slate-800/90 text-xs font-bold transition-all flex items-center gap-1 border border-slate-700/80 hover:border-slate-500"
+                className="px-3.5 py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-slate-800/90 text-xs font-bold transition-all flex items-center gap-1 border border-slate-700/80 hover:border-slate-500"
               >
                 <span className="material-symbols-outlined text-[16px] text-[#F5A623]">login</span>
                 <span>Log In</span>
               </Link>
 
-              {/* Register / Sign Up Button */}
               <Link
                 to="/register"
-                className="px-3 py-1.5 sm:px-4 sm:py-1.5 rounded-full bg-gradient-to-r from-[#F5A623] to-[#E09415] hover:brightness-110 text-slate-950 text-xs font-black transition-all flex items-center gap-1 shadow-gold-sm"
+                className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#F5A623] to-[#E09415] hover:brightness-110 text-slate-950 text-xs font-black transition-all flex items-center gap-1 shadow-gold-sm"
               >
                 <span className="material-symbols-outlined text-[16px]">person_add</span>
                 <span>Register</span>
               </Link>
-
-              {/* 1-Click Instant Demo Dropdown */}
-              <div className="relative hidden xl:block">
-                <button
-                  onClick={() => setShowDemoMenu(!showDemoMenu)}
-                  className="px-2.5 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-bold border border-slate-700/70 flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Quick Demo Login"
-                >
-                  <span className="material-symbols-outlined text-[14px] text-amber-400">bolt</span>
-                  <span>Demo</span>
-                  <span className="material-symbols-outlined text-[14px] text-slate-400">expand_more</span>
-                </button>
-
-                {showDemoMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-[#0E1520] border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 animate-fadeIn">
-                    <p className="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                      Instant Demo Role
-                    </p>
-                    <button
-                      onClick={() => handleDemoSelect('customer')}
-                      className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2 font-medium"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-emerald-400">person</span>
-                      Demo Customer
-                    </button>
-                    <button
-                      onClick={() => handleDemoSelect('provider')}
-                      className="w-full text-left px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 flex items-center gap-2 font-medium"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-[#F5A623]">engineering</span>
-                      Demo Technician
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
@@ -392,6 +339,15 @@ export default function Navbar({ onOpenSosModal }) {
                   Open Dashboard
                 </Link>
 
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-slate-200 hover:text-white text-xs font-bold flex items-center justify-center gap-2 border border-slate-800"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-blue-400">person</span>
+                  Edit Profile
+                </Link>
+
                 <button
                   onClick={() => {
                     logout();
@@ -405,49 +361,24 @@ export default function Navbar({ onOpenSosModal }) {
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-800"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-[#F5A623]">login</span>
-                    Log In
-                  </Link>
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-800"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-[#F5A623]">login</span>
+                  Log In
+                </Link>
 
-                  <Link
-                    to="/register"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#F5A623] to-[#E09415] text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 shadow-gold-sm"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">person_add</span>
-                    Register
-                  </Link>
-                </div>
-
-                {/* 1-Click Instant Demo Access */}
-                <div className="pt-2">
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2 text-center">
-                    ⚡ 1-Click Instant Demo Login:
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => handleDemoSelect('customer')}
-                      className="py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-emerald-400">person</span>
-                      Customer
-                    </button>
-                    <button
-                      onClick={() => handleDemoSelect('provider')}
-                      className="py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5"
-                    >
-                      <span className="material-symbols-outlined text-[16px] text-[#F5A623]">engineering</span>
-                      Technician
-                    </button>
-                  </div>
-                </div>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#F5A623] to-[#E09415] text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 shadow-gold-sm"
+                >
+                  <span className="material-symbols-outlined text-[18px]">person_add</span>
+                  Register
+                </Link>
               </div>
             )}
           </div>

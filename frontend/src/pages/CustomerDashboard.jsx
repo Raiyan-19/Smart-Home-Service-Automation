@@ -48,6 +48,12 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
+      let combined = [];
+      try {
+        const localData = JSON.parse(localStorage.getItem('homeease_local_requests') || '[]');
+        combined = [...localData];
+      } catch (e) {}
+
       try {
         const [reqRes, bookRes] = await Promise.allSettled([
           api.get('/requests'),
@@ -55,16 +61,18 @@ export default function CustomerDashboard() {
         ]);
 
         if (reqRes.status === 'fulfilled' && reqRes.value.data.success && reqRes.value.data.data?.length > 0) {
-          setRequests(reqRes.value.data.data);
+          const apiRequests = reqRes.value.data.data;
+          const merged = [...combined, ...apiRequests.filter((ar) => !combined.some((c) => c._id === ar._id))];
+          setRequests(merged);
         } else {
-          setRequests(defaultCustomerRequests);
+          setRequests(combined.length > 0 ? [...combined, ...defaultCustomerRequests] : defaultCustomerRequests);
         }
         if (bookRes.status === 'fulfilled' && bookRes.value.data.success) {
           setBookings(bookRes.value.data.data);
         }
       } catch (err) {
-        console.warn('API error, using demo customer requests:', err);
-        setRequests(defaultCustomerRequests);
+        console.warn('API error, using local requests:', err);
+        setRequests(combined.length > 0 ? [...combined, ...defaultCustomerRequests] : defaultCustomerRequests);
       } finally {
         setLoading(false);
       }

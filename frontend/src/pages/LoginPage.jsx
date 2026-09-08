@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, quickDemoLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
@@ -25,27 +25,10 @@ export default function LoginPage() {
       if (data.user.role === 'provider') {
         navigate('/provider-dashboard');
       } else {
-        navigate(redirect);
+        navigate(redirect === '/login' ? '/customer-dashboard' : redirect);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (role) => {
-    setError('');
-    setLoading(true);
-    try {
-      const data = await quickDemoLogin(role);
-      if (role === 'provider') {
-        navigate('/provider-dashboard');
-      } else {
-        navigate(redirect);
-      }
-    } catch (err) {
-      setError('Failed demo login. Please make sure backend is running.');
+      setError(err.message || err.response?.data?.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -70,24 +53,37 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3.5 rounded-xl bg-red-950/70 border border-red-800 text-red-300 text-xs font-medium flex items-center gap-2">
-              <span className="material-symbols-outlined text-[18px] text-red-400">error</span>
-              <span>{error}</span>
+            <div className="mb-4 p-4 rounded-xl bg-red-950/80 border border-red-700 text-red-200 text-xs font-medium space-y-2 animate-fadeIn">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-red-400">error</span>
+                <span>{error}</span>
+              </div>
+              {error.toLowerCase().includes('register') && (
+                <div className="pt-1">
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#F5A623] text-slate-950 font-black text-[11px] hover:brightness-110"
+                  >
+                    <span>Click here to Register Now</span>
+                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-heading font-black text-[#F5A623] uppercase tracking-wider mb-1.5">
-                Email Address
+                Registered Email Address
               </label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="customer@homeease.com"
-                className="w-full bg-[#0A0D12] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:border-[#F5A623] focus:outline-none transition-all placeholder:text-slate-500"
+                placeholder="name@example.com"
+                className="w-full bg-[#0A0D12] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:border-[#F5A623] focus:outline-none transition-all placeholder:text-slate-600"
               />
             </div>
 
@@ -96,9 +92,6 @@ export default function LoginPage() {
                 <label className="block text-xs font-heading font-black text-[#F5A623] uppercase tracking-wider">
                   Password
                 </label>
-                <span className="text-xs text-slate-400 hover:text-white cursor-pointer">
-                  Forgot?
-                </span>
               </div>
               <input
                 type="password"
@@ -106,51 +99,28 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#0A0D12] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:border-[#F5A623] focus:outline-none transition-all placeholder:text-slate-500"
+                className="w-full bg-[#0A0D12] border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:border-[#F5A623] focus:outline-none transition-all placeholder:text-slate-600"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-[#F5A623] hover:bg-[#E09415] text-[#0A0D12] font-heading font-black text-xs sm:text-sm uppercase tracking-wider shadow-gold-sm hover:scale-102 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer mt-3"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F5A623] to-[#E09415] hover:brightness-110 text-slate-950 font-heading font-black text-xs sm:text-sm uppercase tracking-wider shadow-gold-sm transition-all flex items-center justify-center gap-2 cursor-pointer mt-3"
             >
-              <span className="material-symbols-outlined text-[18px]">lock_open</span>
-              <span>{loading ? 'Signing in...' : 'Sign In'}</span>
+              <span className="material-symbols-outlined text-[18px]">login</span>
+              <span>{loading ? 'Verifying Account...' : 'Sign In'}</span>
             </button>
           </form>
 
-          {/* Quick 1-Click Demo Accounts */}
-          <div className="mt-6 pt-5 border-t border-slate-800 text-center">
-            <p className="text-[11px] text-slate-400 font-heading font-bold uppercase tracking-wider mb-3">
-              ⚡ Instant 1-Click Demo Access
+          <div className="mt-8 pt-5 border-t border-slate-800 text-center">
+            <p className="text-xs text-slate-400">
+              Don't have an account yet?{' '}
+              <Link to="/register" className="text-[#F5A623] font-bold hover:underline">
+                Create Free Account
+              </Link>
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('customer')}
-                className="px-3 py-2.5 rounded-xl bg-[#0A0D12] hover:bg-slate-900 border border-slate-700 text-[#F5A623] text-xs font-heading font-bold uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[16px]">person</span>
-                Customer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('provider')}
-                className="px-3 py-2.5 rounded-xl bg-[#0B4F6C] hover:bg-[#0E4B6E] border border-[#0B4F6C] text-white text-xs font-heading font-bold uppercase flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-[16px]">engineering</span>
-                Technician
-              </button>
-            </div>
           </div>
-
-          <p className="mt-6 text-center text-xs text-slate-400">
-            Don't have an account yet?{' '}
-            <Link to="/register" className="text-[#F5A623] font-bold hover:underline">
-              Create Free Account
-            </Link>
-          </p>
         </div>
       </main>
 

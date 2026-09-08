@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 
 export default function WorkspaceTerminal() {
   const [activeTab, setActiveTab] = useState('customer');
   const navigate = useNavigate();
-  const { quickDemoLogin } = useAuth();
 
   return (
     <section className="py-16 bg-white border-b border-slate-200" id="workspaces">
@@ -145,13 +143,10 @@ export default function WorkspaceTerminal() {
                 Set your working hours, toggle your online/offline status, and control which Dhaka sectors you cover.
               </p>
               <button
-                onClick={() => {
-                  quickDemoLogin('provider');
-                  navigate('/provider-dashboard');
-                }}
+                onClick={() => navigate('/register?role=provider')}
                 className="text-xs font-bold text-amber-600 hover:underline pt-2 flex items-center gap-1"
               >
-                <span>Try Provider Demo</span>
+                <span>Join as Service Technician</span>
                 <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
               </button>
             </div>

@@ -45,6 +45,16 @@ export default function ServiceTrackingPage() {
 
   const fetchRequest = async () => {
     try {
+      const localData = JSON.parse(localStorage.getItem('homeease_local_requests') || '[]');
+      const found = localData.find((r) => r._id === id);
+      if (found) {
+        setRequest(found);
+        setLoading(false);
+        return;
+      }
+    } catch (e) {}
+
+    try {
       const res = await api.get(`/requests/${id}`);
       if (res.data?.success && res.data.data) {
         setRequest(res.data.data);
@@ -52,7 +62,6 @@ export default function ServiceTrackingPage() {
         setRequest((prev) => prev || getDemoFallbackRequest(id));
       }
     } catch (err) {
-      console.warn('Failed to fetch request, using demo fallback:', err);
       setRequest((prev) => prev || getDemoFallbackRequest(id));
     } finally {
       setLoading(false);
@@ -93,6 +102,12 @@ export default function ServiceTrackingPage() {
             }
           : getDemoFallbackRequest(id)
       );
+
+      try {
+        const localData = JSON.parse(localStorage.getItem('homeease_local_requests') || '[]');
+        const updated = localData.map((r) => (r._id === id ? { ...r, status: nextStatus } : r));
+        localStorage.setItem('homeease_local_requests', JSON.stringify(updated));
+      } catch (e) {}
 
       try {
         if (request?._id && !request._id.startsWith('JOB-')) {

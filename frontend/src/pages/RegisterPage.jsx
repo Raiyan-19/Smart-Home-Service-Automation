@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 
 export default function RegisterPage() {
-  const [role, setRole] = useState('customer');
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get('role') === 'provider' ? 'provider' : 'customer';
+  const [role, setRole] = useState(initialRole);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -61,7 +63,7 @@ export default function RegisterPage() {
         navigate('/customer-dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to register. Please check your inputs.');
+      setError(err.message || err.response?.data?.message || 'Failed to register. Please check your inputs.');
     } finally {
       setLoading(false);
     }

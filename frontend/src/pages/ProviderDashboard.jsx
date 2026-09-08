@@ -59,16 +59,23 @@ export default function ProviderDashboard() {
   ];
 
   const fetchRequests = async () => {
+    let combined = [];
+    try {
+      const localData = JSON.parse(localStorage.getItem('homeease_local_requests') || '[]');
+      combined = [...localData];
+    } catch (e) {}
+
     try {
       const res = await api.get('/requests');
       if (res.data?.success && res.data.data?.length > 0) {
-        setRequests(res.data.data);
+        const apiData = res.data.data;
+        const merged = [...combined, ...apiData.filter((ad) => !combined.some((c) => c._id === ad._id))];
+        setRequests(merged);
       } else {
-        setRequests(defaultRequests);
+        setRequests(combined.length > 0 ? [...combined, ...defaultRequests] : defaultRequests);
       }
     } catch (err) {
-      console.warn('Using default demo provider requests:', err);
-      setRequests(defaultRequests);
+      setRequests(combined.length > 0 ? [...combined, ...defaultRequests] : defaultRequests);
     } finally {
       setLoading(false);
     }
@@ -76,7 +83,7 @@ export default function ProviderDashboard() {
 
   useEffect(() => {
     fetchRequests();
-    const interval = setInterval(fetchRequests, 10000);
+    const interval = setInterval(fetchRequests, 8000);
     return () => clearInterval(interval);
   }, []);
 
@@ -85,11 +92,19 @@ export default function ProviderDashboard() {
     setRequests((prev) =>
       prev.map((r) => (r._id === requestId ? { ...r, status } : r))
     );
+
+    // Update persistent local requests store
+    try {
+      const localData = JSON.parse(localStorage.getItem('homeease_local_requests') || '[]');
+      const updated = localData.map((r) => (r._id === requestId ? { ...r, status } : r));
+      localStorage.setItem('homeease_local_requests', JSON.stringify(updated));
+    } catch (e) {}
+
     setActionMessage(`Order #${requestId.slice(-6).toUpperCase()} updated to "${status}". Customer notified live!`);
     setTimeout(() => setActionMessage(''), 4000);
 
     try {
-      if (!requestId.startsWith('REQ-DHAKA-')) {
+      if (!requestId.startsWith('REQ-DHAKA-') && !requestId.startsWith('JOB-')) {
         await api.patch(`/requests/${requestId}/status`, { status });
       }
     } catch (err) {
@@ -103,11 +118,18 @@ export default function ProviderDashboard() {
     }
 
     setRequests((prev) => prev.filter((r) => r._id !== requestId));
+
+    try {
+      const localData = JSON.parse(localStorage.getItem('homeease_local_requests') || '[]');
+      const updated = localData.filter((r) => r._id !== requestId);
+      localStorage.setItem('homeease_local_requests', JSON.stringify(updated));
+    } catch (e) {}
+
     setActionMessage('Job declined. Reassigned to next best specialist.');
     setTimeout(() => setActionMessage(''), 4000);
 
     try {
-      if (!requestId.startsWith('REQ-DHAKA-')) {
+      if (!requestId.startsWith('REQ-DHAKA-') && !requestId.startsWith('JOB-')) {
         await api.post(`/requests/${requestId}/reject`);
       }
     } catch (err) {

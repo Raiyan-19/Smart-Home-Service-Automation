@@ -28,7 +28,7 @@ function getDhakaDistance(loc1, loc2) {
 export default function SmartMatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, quickDemoLogin } = useAuth();
+  const { user } = useAuth();
 
   // Primary URL & State Parameters
   const serviceType = searchParams.get('serviceType') || 'AC & Appliance Repair';
@@ -344,26 +344,66 @@ export default function SmartMatchPage() {
     });
   };
 
-  // 1-Click Direct Booking
+  // Direct Booking Handler
   const handleDirectBook = async (matchItem, autoAssign = false) => {
     if (!matchItem) return;
 
-    let currentUser = user;
-    if (!currentUser) {
-      try {
-        const loginRes = await quickDemoLogin('customer');
-        currentUser = loginRes?.user;
-      } catch (e) {
-        console.warn('Demo login failed, continuing as guest:', e);
-      }
+    // Must be logged in to confirm booking
+    if (!user) {
+      alert('Please log in or create an account to confirm your service booking.');
+      navigate(`/login?redirect=${encodeURIComponent(window.location.hash.replace('#', ''))}`);
+      return;
     }
 
     setSelectedProviderId(matchItem.providerId);
     setBookingLoading(true);
     setError('');
 
+    const providerPrice = matchItem.provider?.estimatedPrice || 850;
+    const generatedJobId = 'JOB-' + Math.floor(1000 + Math.random() * 9000);
+
+    // Create local request record for instant multi-portal synchronization
+    const localJob = {
+      _id: generatedJobId,
+      serviceType,
+      location: selectedLocation,
+      addressDetails: `House 42, Road 7A, ${selectedLocation}, Dhaka`,
+      preferredDate,
+      preferredTime: selectedTime,
+      urgencyLevel,
+      problemDescription: problemDescription || `${serviceType} maintenance in ${selectedLocation}`,
+      contactPhone: user.phone || contactPhone,
+      estimatedPrice: providerPrice,
+      status: 'Requested',
+      customer: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || contactPhone,
+      },
+      assignedProvider: {
+        _id: matchItem.providerId,
+        rating: matchItem.provider?.rating || 4.9,
+        experienceYears: matchItem.provider?.experienceYears || 5,
+        location: selectedLocation,
+        user: {
+          name: matchItem.provider?.user?.name || 'Mohammad Kabir (Master Tech)',
+          phone: '+880 1712-345678',
+          profileImage: matchItem.provider?.user?.profileImage,
+        },
+      },
+      createdAt: new Date().toISOString(),
+    };
+
     try {
-      const providerPrice = matchItem.provider?.estimatedPrice || 850;
+      const stored = JSON.parse(localStorage.getItem('homeease_local_requests') || '[]');
+      stored.unshift(localJob);
+      localStorage.setItem('homeease_local_requests', JSON.stringify(stored));
+    } catch (e) {
+      console.warn('Failed saving local job:', e);
+    }
+
+    try {
       const isDemo = matchItem.providerId.startsWith('apex-') || matchItem.providerId.startsWith('gulshan-') || matchItem.providerId.startsWith('rahim-') || matchItem.providerId.startsWith('banani-') || matchItem.providerId.startsWith('mirpur-') || matchItem.providerId.startsWith('uttara-');
 
       const reqRes = await api.post('/requests', {
@@ -374,26 +414,20 @@ export default function SmartMatchPage() {
         preferredTime: selectedTime,
         urgencyLevel,
         problemDescription,
-        contactPhone,
+        contactPhone: user.phone || contactPhone,
         providerId: isDemo ? undefined : matchItem.providerId,
         autoAssign,
       });
 
-      if (reqRes.data?.success) {
-        const newRequest = reqRes.data.data;
-        navigate(
-          `/confirmation?requestId=${newRequest._id}&providerId=${matchItem.providerId}&rate=${providerPrice}&date=${preferredDate}&time=${encodeURIComponent(selectedTime)}`
-        );
-      } else {
-        navigate(
-          `/confirmation?requestId=JOB-${Math.floor(1000 + Math.random() * 9000)}&rate=${providerPrice}&date=${preferredDate}&time=${encodeURIComponent(selectedTime)}`
-        );
-      }
-    } catch (err) {
-      console.warn('Backend booking fallback:', err);
-      const providerPrice = matchItem.provider?.estimatedPrice || 850;
+      const actualJobId = reqRes.data?.success && reqRes.data.data?._id ? reqRes.data.data._id : generatedJobId;
+
       navigate(
-        `/confirmation?requestId=JOB-${Math.floor(1000 + Math.random() * 9000)}&rate=${providerPrice}&date=${preferredDate}&time=${encodeURIComponent(selectedTime)}`
+        `/confirmation?requestId=${actualJobId}&providerId=${matchItem.providerId}&rate=${providerPrice}&date=${preferredDate}&time=${encodeURIComponent(selectedTime)}`
+      );
+    } catch (err) {
+      console.warn('Backend booking fallback, using local job:', err);
+      navigate(
+        `/confirmation?requestId=${generatedJobId}&providerId=${matchItem.providerId}&rate=${providerPrice}&date=${preferredDate}&time=${encodeURIComponent(selectedTime)}`
       );
     } finally {
       setBookingLoading(false);
